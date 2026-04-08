@@ -1,0 +1,12 @@
+{
+  "name": "hackerone-automations",
+  "version": "1.0.0",
+  "description": "HackerOne automation scripts",
+  "scripts": {
+    "test": "jest"
+  },
+  "private": true,
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
