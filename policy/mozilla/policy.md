@@ -1,7 +1,7 @@
 # Table of Contents
 
 1. Program Scope
-2. Severity Definitions and Examples
+2. Impact Definitions and Examples
 3. Test Plan
 4. Submission Guidelines
 5. Program Rules
@@ -14,14 +14,35 @@
 
 Please check the list of sites under the Scope section, we would like testing to focus on those sites. Other sites and services are considered out of scope of the program unless the bug is critical (see Severity Definitions and Examples above for examples of critical issues)
 
-# Severity Definitions and Examples
+Our rewards are based on the severity of the issue and the criticality of the service or application. The bounty table lists the range of bounties we pay for vulnerabilities in our applications and **does not apply to out of scope reports**.
+
+The severity is calculated based on the impact of the vulnerability and the likelihood of finding and exploitation the vulnerability, using the below table:
+
+| Impact | Likelihood | Severity
+| ------ | ---------- | ------- |
+| Critical | High | Critical |
+| Critical | Medium | High |
+| Critical | Low | Medium |
+| High | High | Critical |
+| High | Medium | High |
+| High | Low | Medium |
+| Medium | High | High |
+| Medium | Medium | Medium |
+| Medium | Low | Low |
+| Low | High | Medium |
+| Low | Medium | Low |
+| Low | Low | Informational |
+
+Below are the definitions of each impact and likelihood level and some examples. Note that these lists are not extensive and the final severity decision is up to the discretion of Mozilla.
+
+# Impact Definitions and Examples
 
 ## Critical
 
 Critical vulnerabilities are urgent security issues that present an ongoing or immediate danger to the users of our services and our infrastructure
 
-* Remote Code Execution
-* Authentication and Session Management Flaws (which lead to account compromise)
+* Remote Code Execution from an unauthenticated public internet position
+* Authentication and Session Management Flaws (which lead to account compromise and takeover)
 * Disclosure of secrets in publicly accessible assets
 * Hardcoded credentials for a privileged user
 
@@ -43,7 +64,7 @@ Critical vulnerabilities are urgent security issues that present an ongoing or i
  Vulnerabilities which can provide an attacker additional information or positioning that could be used in combination with other vulnerabilities. In addition to issues resulting from the lack of standard defense in depth techniques and security controls.
 
 * XSS (minor)
-* Domain takeovers supported by a proof of concept for `*.mozilla.org`, `*.mozilla.com`, `*.mozilla.net`, `*.firefox.com`, `*.mozgcp.net` and `*.mozaws.net` in addition to the list of sites in scope. If the domain is pointing to a claimed instance by another company, then the report will not be eligible for bounty.
+* Domain takeovers supported by a proof of concept for `*.mozilla.org`, `*.mozilla.com`, `*.mozilla.net`, `*.firefox.com`, `*.mozgcp.net` and `*.mozaws.net` in addition to the list of sites in scope (excluding staging instances). If the domain is pointing to a claimed instance by another company, then the report will not be eligible for bounty.
 * SSRF which leads to reaching **internal** network hosts
 * Disclosure of sensitive information which does not expose the user or organization to immediate risk
 * CSRF for minor actions.
@@ -56,14 +77,44 @@ Critical vulnerabilities are urgent security issues that present an ongoing or i
 * Clickjacking with demonstrated impact (Lack of clickjacking protection (XFO, CSP) is insufficient to claim a bounty)
 * External SSRF
 
-**Note that some low severity issues are not eligible for monetary awards based on their impact. We will recognize the reporter by thanking them on their H1 page.**
+**Note that some low severity issues are not eligible for monetary awards based on their impact.**
 
-## Out of Scope
+# Likelihood Definitions and Examples
+
+Below are some of the factors we take into consideration when determining the likelihood:
+
+* Public internet access vs access from the internal network
+* Authenticated vs unauthenticated access
+* Required permissions and access level
+* Required user interactions
+* Attack complexity
+* Mitigating security controls
+
+## High
+
+* The vulnerability can be exploited using unauthenticated public internet access
+* The vulnerability can be exploited using an authenticated regular user without any special privileges
+* The vulnerability can be exploited without any user interaction
+* Hard corded credentials in a publicly accessible resource
+
+## Medium
+
+* The vulnerability requires one user interaction to be exploited
+* The vulnerability requires low level permissions which are provided to regular users to be exploited
+
+## Low
+
+* The vulnerability requires admin access or high level permissions which are only given to specific users in order to be exploited
+* The vulnerability requires local device access to be exploited
+* The vulnerability requires multiple user interactions to be exploited
+* The vulnerability is mitigated by WAF, CSP or other security controls
+ 
+# Out of Scope
 
 * We follow HackerOne's standard for [Core Ineligible Findings](https://docs.hackerone.com/en/articles/8494488-core-ineligible-findings).
 * In addition to the [custom scope exclusions](https://hackerone.com/mozilla?type=team#scope_exclusions) listed on our policy page
 
-## Misc Notes
+# Misc Notes
 
 We have a bug bounty panel whose members decide whether a report is eligible for bounty and the bounty amount for eligible reports. The panel meets on a weekly basis, except for holidays and vacations, to discuss bounty decisions.
 
@@ -77,10 +128,12 @@ Please note these are general guidelines, and reward decisions are up to the dis
 # Submission Guidelines
 
 * Make sure to review our program policy and scope before submitting to our program.
-* Make sure to use the provided submission template in the report.
-* We would like to have enough information to validate the report, but excessively verbose and long reports which don't include good information also create additional burden on the triage team.
+* Make sure to use the provided submission template in the report. The report should only include the summary of the issue, clear steps to reproduce, supporting proof of concept and the impact statement.
+* Make sure to add supporting evidence for the bug by including screenshots and video PoC to clearly show the steps to reproduce
+* We would like to have enough information to validate the report, but excessively verbose and long reports which include extraneous information create additional burden on the triage team and should be avoided. Follow up comments and answers to our questions should also be to the point and not include extraneous information.
 * Our program policy lists an extensive list of out of scope vulnerabilities, including [invalid reports which are frequently reported](https://bugzilla.mozilla.org/show_bug.cgi?id=1830029). Make sure the issue you are reporting is not one of them.
 * When reporting information disclosure vulnerabilities, note that most Mozilla projects and code are open source and content on most sites is intentionally public.
+* Reports on Firefox clients are out of scope of our web bug bounty program and they should be submitted using the form: https://bugzilla.mozilla.org/form.client.bounty
 
 # Program Rules
 
