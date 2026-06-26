@@ -12,5 +12,4 @@ Below is the list of scope exclusions we added to our policy, they can be modifi
 |Missing HTTP headers|Reports of missing HTTP headers are out of scope except as where their absence fails to mitigate an existing attack|
 |Firefox Clients|Reports in Firefox clients are out of scope of our program and they should be submitted using the form: bugzilla.mozilla.org/form.client.bounty|
 |Cross Window Forgery|Reports of Cross Window Forgery are out of scope. CWF issues are known issues and we are working on a Mozilla wide solution for them.|
-|Issues in Mozilla VPN Inspector|Issues discovered in Mozilla VPN in the web inspector while VPN is in development mode are out of scope, since the inspector exposes endpoints and methods to interact with the VPN for testing purposes.|
 |Injection attacks which require admin access|Injection attacks such stored XSS and HTML injection which require admin access to the application are out of scope since the likelihood of exploiting them is considered low|

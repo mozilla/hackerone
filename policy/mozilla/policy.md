@@ -1,7 +1,7 @@
 # Table of Contents
 
 1. Program Scope
-2. Impact Definitions and Examples
+2. Severity Definitions and Examples
 3. Test Plan
 4. Submission Guidelines
 5. Program Rules
@@ -9,35 +9,37 @@
 7. Response Targets
 8. Disclosure Policy
 9. Safe Harbor
+10. Miscellaneous Notes
 
 # Program Scope
 
-Please check the list of sites under the Scope section, we would like testing to focus on those sites. Other sites and services are considered out of scope of the program unless the bug is critical (see Severity Definitions and Examples above for examples of critical issues)
+Please check the list of sites under the Scope section, we would like testing to focus on those sites. Other sites and services are considered out of scope of the program unless the bug is critical (see Severity Definitions and Examples section for examples of critical issues)
 
-Our rewards are based on the severity of the issue and the criticality of the service or application. The bounty table lists the range of bounties we pay for vulnerabilities in our applications and **does not apply to out of scope reports**.
+
+# Severity Definitions and Examples
+
+Our rewards are based on the severity of the issue and the criticality of the service or application.
+
+The bounty table lists the range of bounties we pay for vulnerabilities in our applications and **does not apply to out of scope reports**.
+
+Low and medium severity reports are not eligible for bounty.
 
 The severity is calculated based on the impact of the vulnerability and the likelihood of finding and exploitation the vulnerability, using the below table:
 
-| Impact | Likelihood | Severity
-| ------ | ---------- | ------- |
-| Critical | High | Critical |
-| Critical | Medium | High |
-| Critical | Low | Medium |
-| High | High | Critical |
-| High | Medium | High |
-| High | Low | Medium |
-| Medium | High | High |
-| Medium | Medium | Medium |
-| Medium | Low | Low |
-| Low | High | Medium |
-| Low | Medium | Low |
-| Low | Low | Informational |
+| Impact/Likelihood | High | Medium | Low |
+| :---- | :---- | :---- | :---- |
+| Critical | Critical | High | Medium |
+| High | Critical | High | Medium |
+| Medium | High | Medium | Low |
+| Low | Medium | Low | Informational |
+
+We do not rely on the CVSS scoring method to calculate severity.
 
 Below are the definitions of each impact and likelihood level and some examples. Note that these lists are not extensive and the final severity decision is up to the discretion of Mozilla.
 
-# Impact Definitions and Examples
+## Impact
 
-## Critical
+### Critical
 
 Critical vulnerabilities are urgent security issues that present an ongoing or immediate danger to the users of our services and our infrastructure
 
@@ -48,7 +50,7 @@ Critical vulnerabilities are urgent security issues that present an ongoing or i
 
 **Note that Critical vulnerabilities found in out of scope assets are awarded in the range of $500-$1000.**
 
-## High
+### High
 
  Typically, high severity issues are exploitable web vulnerabilities that can lead to the targeted compromise of a small number of users.
 
@@ -59,7 +61,7 @@ Critical vulnerabilities are urgent security issues that present an ongoing or i
 * XML External Entity (XXE) attack
 * Hardcoded credentials for a non-privileged user
 
-## Medium
+### Medium
 
  Vulnerabilities which can provide an attacker additional information or positioning that could be used in combination with other vulnerabilities. In addition to issues resulting from the lack of standard defense in depth techniques and security controls.
 
@@ -69,17 +71,17 @@ Critical vulnerabilities are urgent security issues that present an ongoing or i
 * Disclosure of sensitive information which does not expose the user or organization to immediate risk
 * CSRF for minor actions.
 
-## Low
+### Low
 
  Minor security vulnerabilities which could lead to leaks or spoofs of non-sensitive information. Missing best practice security controls
 
 * XSS (blocked by CSP)
 * Clickjacking with demonstrated impact (Lack of clickjacking protection (XFO, CSP) is insufficient to claim a bounty)
 * External SSRF
+* Injection attacks which require privileged access to modify content
 
-**Note that some low severity issues are not eligible for monetary awards based on their impact.**
 
-# Likelihood Definitions and Examples
+## Likelihood
 
 Below are some of the factors we take into consideration when determining the likelihood:
 
@@ -90,35 +92,29 @@ Below are some of the factors we take into consideration when determining the li
 * Attack complexity
 * Mitigating security controls
 
-## High
+### High
 
 * The vulnerability can be exploited using unauthenticated public internet access
 * The vulnerability can be exploited using an authenticated regular user without any special privileges
 * The vulnerability can be exploited without any user interaction
 * Hard corded credentials in a publicly accessible resource
 
-## Medium
+### Medium
 
 * The vulnerability requires one user interaction to be exploited
 * The vulnerability requires low level permissions which are provided to regular users to be exploited
 
-## Low
+### Low
 
 * The vulnerability requires admin access or high level permissions which are only given to specific users in order to be exploited
 * The vulnerability requires local device access to be exploited
 * The vulnerability requires multiple user interactions to be exploited
 * The vulnerability is mitigated by WAF, CSP or other security controls
  
-# Out of Scope
+## Out of Scope Vulnerabilities
 
 * We follow HackerOne's standard for [Core Ineligible Findings](https://docs.hackerone.com/en/articles/8494488-core-ineligible-findings).
 * In addition to the [custom scope exclusions](https://hackerone.com/mozilla?type=team#scope_exclusions) listed on our policy page
-
-# Misc Notes
-
-We have a bug bounty panel whose members decide whether a report is eligible for bounty and the bounty amount for eligible reports. The panel meets on a weekly basis, except for holidays and vacations, to discuss bounty decisions.
-
-Please note these are general guidelines, and reward decisions are up to the discretion of Mozilla.
 
 # Test Plan
 
@@ -131,9 +127,10 @@ Please note these are general guidelines, and reward decisions are up to the dis
 * Make sure to use the provided submission template in the report. The report should only include the summary of the issue, clear steps to reproduce, supporting proof of concept and the impact statement.
 * Make sure to add supporting evidence for the bug by including screenshots and video PoC to clearly show the steps to reproduce
 * We would like to have enough information to validate the report, but excessively verbose and long reports which include extraneous information create additional burden on the triage team and should be avoided. Follow up comments and answers to our questions should also be to the point and not include extraneous information.
+* AI-assisted submissions must follow the above guidelines and Hackerone's [code of conduct](https://www.hackerone.com/policies/code-of-conduct), otherwise the report will be closed as Not Applicable.
 * Our program policy lists an extensive list of out of scope vulnerabilities, including [invalid reports which are frequently reported](https://bugzilla.mozilla.org/show_bug.cgi?id=1830029). Make sure the issue you are reporting is not one of them.
 * When reporting information disclosure vulnerabilities, note that most Mozilla projects and code are open source and content on most sites is intentionally public.
-* Reports on Firefox clients are out of scope of our web bug bounty program and they should be submitted using the form: https://bugzilla.mozilla.org/form.client.bounty
+* Reports in Firefox and Mozilla VPN clients are out of scope of our web bug bounty program and they should be submitted using the form: https://bugzilla.mozilla.org/form.client.bounty
 
 # Program Rules
 
@@ -165,6 +162,10 @@ Valid reasons for appeal:
 * The H1 triager closes the report as informative or duplicate and no longer responds to the hacker.
 * The report is closed as informative or duplicate and the hacker provides additional information which proves otherwise.
 
+Reporters can also use mediation requests on Hackerone for appealing decisions if they do not get a response from us within a week.
+
+Note that bounty decisions are final.
+
 # Response Targets
 
 Mozilla will make a best effort to meet the following SLAs for hackers participating in our program:
@@ -181,6 +182,7 @@ We'll try to keep you informed about our progress throughout the process.
 # Disclosure Policy
 
 * Our program discloses security reports when they are fixed and rewarded. We make exceptions in case reporters have a valid reason for not using full disclosure or when they need more time in the research before the report is disclosed. We can consider partial disclosure in those cases, we can discuss and agree on the type of disclosure.
+* We will limit the disclosure to impactful reports which could benefit other programs and the security community.
 * Disclosure will be done every two weeks, on the first and third Tuesday of the month. This cadence is required to prepare our H1 triage pod for an increase in report volume after disclosing reports.
 * Follow HackerOne's [disclosure guidelines](https://www.hackerone.com/disclosure-guidelines).
 
@@ -189,3 +191,8 @@ We'll try to keep you informed about our progress throughout the process.
 Mozilla strongly supports security research into our products and wants to encourage that research. Therefore, we have enabled the [Gold Standard Safe Harbor policy](https://hackerone.com/mozilla_core_services/safe_harbor) in our program.
 
 If you're not sure whether your conduct complies with this policy, please contact us first at security@mozilla.org and we will do our best to clarify.
+
+
+# Miscellaneous Notes
+* We have a bug bounty panel whose members decide whether a report is eligible for bounty and the bounty amount for eligible reports. The panel meets on a weekly basis, except for holidays and vacations, to discuss bounty decisions.
+* In certain situations such as increased report volume, we might resort to [pausing our Hackerone program](https://docs.hackerone.com/en/articles/8499776-pausing-report-submissions). In this case, the program will no longer accept new submissions. We will make sure to send out communication when we pause and re-enable report submissions.
