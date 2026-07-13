@@ -9,6 +9,6 @@
   1. [add step]
 
 ## Supporting Material/References:
-[list any additional material (e.g. screenshots, logs, etc.)]
+[ include screenshots and a video PoC to clearly show the steps taken so that we can reproduce the bug.]
 
-  * [attachment / reference]
+
