@@ -1,4 +1,4 @@
-You're about to submit a report to Mozilla. Please make sure to provide enough information about the issue to help us in the validation process, and to use the submission template  in the report.
+You're about to submit a report to Mozilla. Please make sure to provide enough information about the issue to help us in the validation process, and **make sure to use the report template  in the report**. We also ask that you include screenshots and a video PoC to clearly show the steps taken so that we can reproduce the bug. Avoid submitting overly verbose reports and stick to the provided report template.
 
 If you haven't yet, please remember to review our [Security Page](https://hackerone.com/mozilla) to learn about our policy. 
 
