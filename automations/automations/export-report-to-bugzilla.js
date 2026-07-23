@@ -1,3 +1,7 @@
+// automation script for exporting hackerone reports to bugzilla
+// the automation will run when the custom field 'export to bugzilla' is checked
+// the script relies on adding  bugzilla_url and bugzilla_api_key as secrets in the automation
+
 exports.run = async ({data, config, apiGet, apiPost, getSecret, promptHai}) => {
   const dryRun = true; // <-- Change this to false when ready for production
   
