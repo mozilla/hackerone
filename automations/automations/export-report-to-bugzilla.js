@@ -2,9 +2,7 @@
 // the automation will run when the custom field 'export to bugzilla' is checked
 // the script relies on adding  bugzilla_url and bugzilla_api_key as secrets in the automation
 
-exports.run = async ({data, config, apiGet, apiPost, getSecret, promptHai}) => {
-  const dryRun = true; // <-- Change this to false when ready for production
-  
+exports.run = async ({data, config, apiGet, apiPost, getSecret, promptHai}) => { 
   // Validate that this is a custom field update activity
   if (data.activity?.type !== 'activity-report-custom-field-value-updated') {
     return { 
@@ -19,7 +17,7 @@ exports.run = async ({data, config, apiGet, apiPost, getSecret, promptHai}) => {
   if (!customFieldLabel || customFieldLabel.toLowerCase() !== 'export to bugzilla') {
     return { 
       status: 'noop', 
-      comment: 'Not the export to bugzilla field' 
+      comment: 'export to bugzilla field was not updated' 
     };
   }
   
@@ -30,7 +28,7 @@ exports.run = async ({data, config, apiGet, apiPost, getSecret, promptHai}) => {
   if (!newValue || (newValue !== 'true' && newValue !== '1' && newValue !== 'checked')) {
     return { 
       status: 'noop', 
-      comment: 'Checkbox is not checked' 
+      comment: 'export to bugzilla field is not checked' 
     };
   }
 
@@ -42,6 +40,10 @@ exports.run = async ({data, config, apiGet, apiPost, getSecret, promptHai}) => {
   // Fetch the full report details
   const report = await apiGet(`/reports/${data.reportId}`);
   const reportData = report.data;
+  
+  // Get Bugzilla credentials from secrets
+  const bugzillaUrl = await getSecret('bugzilla_url');
+  const bugzillaApiKey = await getSecret('bugzilla_api_key');
 
   // Extract report information
   const title = reportData.attributes.title;
@@ -50,10 +52,6 @@ exports.run = async ({data, config, apiGet, apiPost, getSecret, promptHai}) => {
   const weakness = reportData.relationships?.weakness?.data?.attributes;
   const submissionDate = reportData.attributes.created_at;
   const reporter = reportData.relationships?.reporter?.data?.attributes.username
-  
-  // Get Bugzilla credentials from secrets
-  const bugzillaUrl = await getSecret('bugzilla_url');
-  const bugzillaApiKey = await getSecret('bugzilla_api_key');
 
   // Prepare Bugzilla bug data
   const bugzillaData = {
@@ -89,22 +87,78 @@ ${vulnerabilityInfo}
   }
 
   const bugzillaResult = await bugzillaResponse.json();
-  const bugId = bugzillaResult.id;
+  const bugId = bugzillaResult.id; 
 
   console.log(`Successfully exported report ${data.reportId} to Bugzilla bug ${bugId}, URL: ${bugzillaUrl}/show_bug.cgi?id=${bugId}`);
+   
+  // Access attachments from the report data
+  const attachments = reportData.relationships?.attachments?.data || [];
 
-   if (!dryRun) {
-    // Set manual reference on the report
-    await apiPost(`/reports/${data.reportId}/issue_tracker_reference_id`,
-        JSON.stringify({
-            "data": {
-                "type": "issue-tracker-reference-id",
-                "attributes": {
-                    "reference": `${bugId}`
-                  
-                }
-            }
-        })
-    );
-   }
+  if (attachments.length !== 0) {
+    // Upload attachments to Bugzilla
+    console.log(`Uploading ${attachments.length} attachments to bugzilla bug ${bugId}`);
+    
+    for (const attachment of attachments) {
+      try {
+        const attachmentUrl = attachment.attributes?.expiring_url;
+        const fileName = attachment.attributes?.file_name;
+        const contentType = attachment.attributes?.content_type;
+        
+        if (!attachmentUrl) continue;
+
+        // Download the attachment from HackerOne
+        const fileResponse = await fetch(attachmentUrl);
+        if (!fileResponse.ok) continue;
+
+        const fileBuffer = await fileResponse.arrayBuffer();
+        const base64Data = Buffer.from(fileBuffer).toString('base64');
+
+        // Upload to Bugzilla
+        await fetch(`${bugzillaUrl}/rest/bug/${bugId}/attachment`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-BUGZILLA-API-KEY': bugzillaApiKey
+          },
+          body: JSON.stringify({
+            ids: [bugId],
+            data: base64Data,
+            file_name: fileName,
+            content_type: contentType,
+            summary: `F${attachment.id}`
+          })
+        });
+      } catch (error) {
+        console.log(`Failed to upload attachment ${attachment.attributes?.file_name}: ${error.message}`);
+        // Continue with other attachments
+      }
+    }
+  }
+  
+  // Set manual reference on the report
+  await apiPost(`/reports/${data.reportId}/issue_tracker_reference_id`,
+      JSON.stringify({
+          "data": {
+              "type": "issue-tracker-reference-id",
+              "attributes": {
+                  "reference": `${bugId}`
+                
+              }
+          }
+      })
+  );
+
+  // add internal link with the bug link  
+  await apiPost(
+    `/reports/${data.reportId}/activities`,
+    JSON.stringify({
+      data: {
+        type: 'activity-comment',
+        attributes: {
+          message: `Report successfully exported to Bugzilla: ${bugzillaUrl}/show_bug.cgi?id=${bugId}`,
+          internal: true
+        }
+      }
+    })
+  );
 };
