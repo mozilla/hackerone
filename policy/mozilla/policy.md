@@ -29,6 +29,8 @@ Our rewards are based on the severity of the issue and the criticality of the se
 
 **Note that Critical vulnerabilities found in out of scope assets are awarded in the range of $500-$1000.**
 
+Domain takeovers supported by a proof of concept for `*.mozilla.org`, `*.mozilla.com`, `*.mozilla.net`, `*.firefox.com`, `*.mozgcp.net` and `*.mozaws.net` will be eligible for a bounty of $100. 
+
 # Severity Definitions and Examples
 
 We do not rely on the CVSS scoring method to calculate severity. Instead, we rely on analyzing the impact and likelihood of the issue.
@@ -145,7 +147,7 @@ Please provide detailed reports with reproducible steps. If the report is not de
 
 To be eligible for a reward under this program:
 
-* The security bug must be original and previously unreported.  
+* The security bug must be original and previously unreported. External submissions that have already been reported internally are not eligible for a bounty. 
 * The security bug must be a part of Mozilla's code, not the code of a third party. We will pay bounties for vulnerabilities in third-party libraries incorporated into shipped client code or third-party websites utilized by Mozilla.  
 * You must not have written the buggy code or otherwise been involved in contributing the buggy code to the Mozilla project.  
 * You must be old enough to be eligible to participate in and receive payment from this program in your jurisdiction, or otherwise qualify to receive payment, whether through consent from your parent or guardian or some other way.  
@@ -203,4 +205,4 @@ If you're not sure whether your conduct complies with this policy, please contac
 
 # Miscellaneous Notes
 
-We have a bug bounty panel whose members decide whether a report is eligible for bounty and the bounty amount for eligible reports. The panel meets on a weekly basis, except for holidays and vacations, to discuss bounty decisions. 
+All bounties paid will be at the discretion of the bug bounty panel. The panel will evaluate the severity of reported issues with the help of engineers who work on the affected code. The panel meets on a weekly basis, except for holidays and vacations, to discuss bounty decisions. 
