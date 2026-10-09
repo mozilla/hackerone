@@ -5,15 +5,6 @@
  * based on the program's severity definitions.
  */
 
-/**
- * Extracts the "Severity Definitions and Examples" section from a program policy.
- * @param {string} policy - The full program policy text
- * @returns {string|null} - The extracted section or null if not found
- */
-function extractSeverityDefinitions(policy) {
-  const match = policy.match(/^# Severity Definitions and Examples\n([\s\S]*?)(?=\n# [A-Z])/m);
-  return match ? `# Severity Definitions and Examples\n${match[1].trim()}` : null;
-}
 
 /**
  * Parses HAI's response to extract severity and reasoning.
@@ -21,17 +12,19 @@ function extractSeverityDefinitions(policy) {
  * @returns {{severity: string|null, reasoning: string|null}}
  */
 function parseHaiResponse(response) {
-  const severityMatch = response.match(/\**severity\**\s*:?\s*(critical|high|medium|low|none)/i);
+  const severityMatch = response.match(/\**severity\**\s*:?\s*(critical|high|medium|moderate|low|none)/i);
   const reasoningMatch = response.match(/\**reasoning\**\s*:?\s*(.*)/i);
-  const severity = severityMatch ? severityMatch[1].toLowerCase() : null;
+  // Normalize "moderate" to "medium" for the API
+  const severity = severityMatch ? severityMatch[1].toLowerCase().replace('moderate', 'medium') : null;
+
   const reasoning = reasoningMatch ? reasoningMatch[1] : null;
   return { severity, reasoning };
 }
 
-exports.extractSeverityDefinitions = extractSeverityDefinitions;
 exports.parseHaiResponse = parseHaiResponse;
 
 exports.run = async ({data, config, apiGet, apiPost, apiPut, promptHai}) => {
+  // Configuration - Set to true for testing (logs only), false for production (makes actual changes)
   const dryRun = true; // <-- Change this to false when ready for production
   const debug = false;  // <-- Set to false to disable debug logging
 
@@ -41,80 +34,107 @@ exports.run = async ({data, config, apiGet, apiPost, apiPut, promptHai}) => {
   }
 
   console.log(`Processing report ${data.reportId} in ${dryRun ? "DRY-RUN" : "PRODUCTION"} mode`);
-  if (debug) console.log("DEBUG - input data:", JSON.stringify(data, null, 2));
 
-  // https://docs.hackerone.com/en/articles/9653528-creating-and-running-automations#h_c9d4b0d863
   const report = data.report;
   const program = report.relationships.program;
-
-  // 1. Get the program handle from the report relationships
-  const programHandle = program.data.attributes.handle;
   const programId = program.data.id;
 
-  // Despite what the documentation says, the program.data.attributes object does not contain the full policy
-  // https://api.hackerone.com/customer-reference/#program
-  // Because it's a "program_small" object which only has the handle
-  // As a result we need to fetch the full program
-  const programResponse = await apiGet(`/programs/${programId}`);
-  if (debug) console.log("DEBUG - programResponse:", JSON.stringify(programResponse, null, 2));
-  const programPolicy = programResponse.data.attributes.policy;
+  if (debug) console.log("DEBUG - input data:", JSON.stringify(data, null, 2));
 
-  // Extract the "Severity Definitions and Examples" section from the policy
-  const severityDefinitions = extractSeverityDefinitions(programPolicy);
-  if (debug) console.log("DEBUG - severityDefinitions:", JSON.stringify({"severityDefinitions": severityDefinitions}, null, 2));
+  // Fetch scope exclusions
+  const scopeExclusionsRes = await apiGet(`/programs/${programId}/scope_exclusions`);
 
-  if (!severityDefinitions) {
-    console.log(`Report ${data.reportId}: Could not find "Severity Definitions and Examples" section in program policy`);
-    return;
+  // Format the exclusions for your prompt
+  let exclusionsText = "";
+  if (scopeExclusionsRes.data && scopeExclusionsRes.data.length > 0) {
+    exclusionsText = scopeExclusionsRes.data.map(exclusion => {
+      const category = exclusion.attributes.category;
+      const details = exclusion.attributes.details;
+      return `- ${category}: ${details}`;
+    }).join("\n");
   }
 
   // 2. Prepare context and ask HAI for assessment
   const promptMessage = `
-The following "Severity Definitions and Examples" section lists out 4 severity definitions and examples.
-The 4 severities are Critical, High, Medium and Low.
+Using the "Severity Definitions and Examples" section in the Mozilla program policy, assess the severity of security vulnerability report #${data.reportId}. The 4 severities are Critical, High, Medium and Low.
 
-${severityDefinitions}
+**Scope Exclusions from Mozilla's program page:**
 
-# Request
+${exclusionsText}
 
-Based on the security vulnerability report above
-and the "Severity Definitions and Examples" section which lists the 4 severities,
-determine which severity this security vulnerability report should have.
+Consider:
+- Prerequisites for exploitation (authentication, permissions, user interaction)
+- Demonstrated vs theoretical impact (code analysis vs working PoC)
+- Whether the vulnerability bypasses actual security enforcement or affects advisory/informational elements
+- Mozilla's impact and likelihood definitions and matrix
+- Scope exclusions listed above
+- Hackerone's Core ineligible findings https://docs.hackerone.com/en/articles/8494488-core-ineligible-findings
 
-Disregard what severity the security vulnerability report asserts and instead use the examples from the Program Policy
-"Severity Definitions and Examples" to determine the correct severity.
+Critical Rules:
+- First check if the vulnerability falls under scope exclusions or core ineligible findings - if yes, severity should be "None"
+- Disregard the severity the reporter asserts - use only Mozilla's definitions and examples
+- Prioritize practical demonstrated impact over theoretical code analysis
+- Consider the full exploitation context and real-world feasibility
+- Keep the response concise and limited to the output format described below
 
-Please provide your assessment in this exact format for parsing:
+
+Output Format:
+Provide your assessment in this exact format for parsing:
 
 SEVERITY: [Critical/High/Medium/Low/None]
-REASONING: [Your explanation]
+
+REASONING: [Provide a brief explanation in 3-4 concise sentences covering:
+1. Whether the issue falls under scope exclusions or core ineligible findings (if applicable)
+2. What the vulnerability technically allows and prerequisites
+3. Whether impact is demonstrated or theoretical, and if it bypasses actual security controls
+4. How this maps to Mozilla's impact and likelihood levels
+5. Final severity per Mozilla's matrix]
 `;
 
   // Ask HAI for assessment
+  // more info about promptHai https://docs.hackerone.com/en/articles/9653528-creating-and-running-automations
+  // it doesn't look like there is a way to disable logging when polling for the response, the helper method does the logging
   const haiResponse = await promptHai(
     promptMessage,
     {
       reportIds: [data.reportId],
-      programHandles: [programHandle]
+      programHandles: ["mozilla"]
     }
   );
-
-  if (debug) console.log("DEBUG - haiResponse:", JSON.stringify({"haiResponse": haiResponse}));
 
   // 6. Parse HAI's response with more flexible regex
   // HAI doesn't always return in exact format, so we need flexible parsing
   const { severity, reasoning } = parseHaiResponse(haiResponse);
 
-  console.log("parsed severity:", severity);
-  console.log("parsed reasoning:", reasoning);
+  if (debug) {
+    console.log("DEBUG - parsed severity:", severity);
+    console.log("DEBUG - parsed reasoning:", reasoning);
+  }
 
   // 7. Take action based on HAI's assessment
   if (severity) {
-    const severityMessage = `Automated severity assessment: This report was automatically classified as ${severity} severity.\n\n${haiResponse}`;
-    if (dryRun) {
-      console.log(`[DRY-RUN] Report ${data.reportId} would have severity set to ${severity}`);
-      console.log(`[DRY-RUN] Internal comment that would be added about automated severity assessment : ${JSON.stringify({"severityMessage": severityMessage})}`);
-    } else {
+    const severityMessage = `Automated severity assessment: This report was automatically classified as ${severity} severity.\n\n ${haiResponse} `;
+    
+    console.log(`[DRY-RUN] Report ${data.reportId} would have severity set to ${severity}`);
+    
+    // Add an internal comment about the automated assessment
+    // https://api.hackerone.com/customer-resources/#reports-create-comment
+    
+    const commentResponse = await apiPost(`/reports/${data.reportId}/activities`,
+      JSON.stringify({
+        data: {
+          type: "activity-comment",
+          attributes: {
+            message: severityMessage,
+            internal: true
+          }
+        }
+      })
+    );
+
+    if (debug) console.log("DEBUG - commentResponse:", JSON.stringify(commentResponse, null, 2));
+    
+    if (!dryRun) {
       // Set the severity field on the report
       // https://api.hackerone.com/customer-resources/#reports-update-severity
       const severityResponse = await apiPut(`/reports/${data.reportId}/severities`,
@@ -128,22 +148,8 @@ REASONING: [Your explanation]
           }
         })
       );
+      
       if (debug) console.log("DEBUG - severityResponse:", JSON.stringify(severityResponse, null, 2));
-
-      // Add an internal comment about the automated assessment
-      // https://api.hackerone.com/customer-resources/#reports-create-comment
-      const commentResponse = await apiPost(`/reports/${data.reportId}/activities`,
-        JSON.stringify({
-          data: {
-            type: "activity-comment",
-            attributes: {
-              message: severityMessage,
-              internal: true
-            }
-          }
-        })
-      );
-      if (debug) console.log("DEBUG - commentResponse:", JSON.stringify(commentResponse, null, 2));
 
       console.log(`Report ${data.reportId} severity set to ${severity}`);
     }
